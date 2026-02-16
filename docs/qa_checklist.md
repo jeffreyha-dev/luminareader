@@ -17,6 +17,7 @@ Last Updated: 2026-02-16
 ## Reader Engines
 - EPUB opens and page turns work by click zones and arrow keys.
 - EPUB theme/font/line-height updates apply without re-opening the book.
+- Reading direction setting (`LTR`/`RTL`) changes arrow/tap navigation behavior across readers.
 - PDF opens and default zoom fits viewport.
 - PDF double-page layout works in landscape when layout mode is `Double`.
 - CBZ comic opens, supports single/double/continuous modes.
@@ -37,3 +38,15 @@ Last Updated: 2026-02-16
 - `docs/PRD.md` matches supported formats.
 - `docs/development.md` matches current core stack.
 - `docs/architecture.md` matches current reader engine implementation.
+
+## Focused QA Run: Reading Direction (2026-02-16)
+- Scope: LTR/RTL behavior for EPUB, PDF, and CBZ readers.
+- Method: code-path verification + production build. No browser e2e harness is configured in this repo.
+
+- PASS: Global keyboard arrows always call shared `prevPage`/`nextPage` actions from reader page.
+- PASS: Settings panel exposes persistent `Reading Direction` control (`Left to Right` / `Right to Left`).
+- PASS: EPUB engine maps `prevPage`/`nextPage`, click zones, and nav buttons using selected direction.
+- PASS: PDF engine navigation (single + double spread) uses selected direction and spread-safe bounds.
+- PASS: CBZ engine navigation (single + double spread) uses selected direction and spread-safe bounds.
+- PASS: Production build succeeds after direction updates (`npm run build`).
+- PENDING (manual browser interaction): validate tactile feel on real devices (desktop keyboard + touch) for all three engines in both `LTR` and `RTL`.

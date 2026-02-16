@@ -18,6 +18,12 @@ Welcome to LuminaReader! This guide helps you navigate your library and reading 
 - `Esc`: Close Reader / Return to Library
 - `M`: Toggle Menu/Controls
 
+### Reader Settings
+- Open reader settings (`S` shortcut) to customize:
+- Theme and typography (EPUB)
+- Page layout mode (`Single`, `Double`, `Continuous`)
+- Reading direction (`Left to Right` / `Right to Left`) for page-turn controls
+
 ## Managing Your Library
 - **Search:** Use the search bar at the top to filter by title or author.
 - **Filter:** Click the pill buttons (All, eBooks, PDFs, Comics) to narrow your view.

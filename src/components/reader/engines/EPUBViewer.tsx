@@ -27,9 +27,10 @@ export default function EPUBViewer({ book }: EPUBViewerProps) {
         fontSize,
         fontFamily,
         customFontFamily,
-        lineHeight
+        lineHeight,
+        readingDirection
     } = useSettingsStore();
-    const { updateProgress, setToc, setSearchResults, setSearching, bookmarks, setBookmarks } = useReaderStore();
+    const { updateProgress, setToc, setSearchResults, setSearching } = useReaderStore();
 
     /** Apply CSS theme/typography to the epub.js rendition. */
     const applyStyles = useCallback((
@@ -198,6 +199,22 @@ export default function EPUBViewer({ book }: EPUBViewerProps) {
         applyStyles(theme, customThemeBackground, customThemeText, fontSize, fontFamily, customFontFamily, lineHeight);
     }, [theme, customThemeBackground, customThemeText, fontSize, fontFamily, customFontFamily, lineHeight, applyStyles]);
 
+    const goBack = useCallback(() => {
+        if (readingDirection === 'rtl') {
+            renditionRef.current?.next();
+            return;
+        }
+        renditionRef.current?.prev();
+    }, [readingDirection]);
+
+    const goForward = useCallback(() => {
+        if (readingDirection === 'rtl') {
+            renditionRef.current?.prev();
+            return;
+        }
+        renditionRef.current?.next();
+    }, [readingDirection]);
+
     // Register navigation + search actions
     useEffect(() => {
         useReaderStore.setState({
@@ -205,10 +222,10 @@ export default function EPUBViewer({ book }: EPUBViewerProps) {
                 renditionRef.current?.display(loc);
             },
             prevPage: () => {
-                renditionRef.current?.prev();
+                goBack();
             },
             nextPage: () => {
-                renditionRef.current?.next();
+                goForward();
             },
             search: async (query: string) => {
                 if (!bookRef.current) return;
@@ -237,10 +254,7 @@ export default function EPUBViewer({ book }: EPUBViewerProps) {
                 search: async () => { }
             });
         };
-    }, [setSearchResults, setSearching]);
-
-    const prevPage = () => renditionRef.current?.prev();
-    const nextPage = () => renditionRef.current?.next();
+    }, [goBack, goForward, setSearchResults, setSearching]);
 
     if (hasError) {
         return (
@@ -263,9 +277,9 @@ export default function EPUBViewer({ book }: EPUBViewerProps) {
 
             {/* Click zones for page turning */}
             <div className="absolute inset-0 flex z-[1] pointer-events-none">
-                <div className="w-1/4 h-full cursor-w-resize pointer-events-auto" onClick={prevPage} />
+                <div className="w-1/4 h-full cursor-w-resize pointer-events-auto" onClick={goBack} />
                 <div className="w-1/2 h-full" />
-                <div className="w-1/4 h-full cursor-e-resize pointer-events-auto" onClick={nextPage} />
+                <div className="w-1/4 h-full cursor-e-resize pointer-events-auto" onClick={goForward} />
             </div>
 
             {/*
@@ -281,13 +295,13 @@ export default function EPUBViewer({ book }: EPUBViewerProps) {
             {/* Floating nav buttons */}
             <div className="fixed bottom-8 left-4 right-4 flex justify-between items-center pointer-events-none z-10">
                 <button
-                    onClick={prevPage}
+                    onClick={goBack}
                     className="p-3 glass border border-[var(--border)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] pointer-events-auto transition-all hover:scale-110 active:scale-95 shadow-lg"
                 >
                     <ChevronLeft size={24} />
                 </button>
                 <button
-                    onClick={nextPage}
+                    onClick={goForward}
                     className="p-3 glass border border-[var(--border)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] pointer-events-auto transition-all hover:scale-110 active:scale-95 shadow-lg"
                 >
                     <ChevronRight size={24} />

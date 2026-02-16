@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Type, Sun, Moon, Coffee, Palette, BookOpen, Columns2, ScrollText } from 'lucide-react';
+import { X, Type, Sun, Moon, Coffee, Palette, BookOpen, Columns2, ScrollText, ArrowLeftRight } from 'lucide-react';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useReaderStore } from '@/stores/readerStore';
 import { cn } from '@/lib/utils/cn';
@@ -15,6 +15,7 @@ export default function SettingsPanel() {
         fontFamily, setFontFamily,
         customFontFamily, setCustomFontFamily,
         lineHeight, setLineHeight,
+        readingDirection, setReadingDirection,
         comicMode, setComicMode
     } = useSettingsStore();
 
@@ -49,6 +50,10 @@ export default function SettingsPanel() {
         { id: 'double', name: 'Double (Landscape)', icon: Columns2 },
         { id: 'continuous', name: 'Continuous', icon: ScrollText },
     ];
+    const directionModes = [
+        { id: 'ltr', name: 'Left to Right', hint: 'Western books and most PDFs' },
+        { id: 'rtl', name: 'Right to Left', hint: 'Manga and RTL reading flow' },
+    ] as const;
 
     return (
         <div className="fixed inset-y-0 right-0 w-80 glass border-l border-[var(--border)] z-[60] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
@@ -204,6 +209,36 @@ export default function SettingsPanel() {
                     </div>
                     <p className="text-[11px] text-[var(--text-secondary)]">
                         Double-page is automatically used only on landscape screens.
+                    </p>
+                </div>
+
+                {/* Reading Direction Section */}
+                <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
+                        <ArrowLeftRight size={12} />
+                        Reading Direction
+                    </label>
+                    <div className="grid grid-cols-1 gap-2">
+                        {directionModes.map((mode) => (
+                            <button
+                                key={mode.id}
+                                onClick={() => setReadingDirection(mode.id)}
+                                className={cn(
+                                    "flex items-center justify-between px-4 py-3 rounded-xl border transition-all",
+                                    readingDirection === mode.id
+                                        ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] font-semibold"
+                                        : "border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]"
+                                )}
+                            >
+                                <span>{mode.name}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">
+                                    {mode.hint}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-[11px] text-[var(--text-secondary)]">
+                        Affects keyboard arrows and page-turn controls in EPUB, PDF, and comic readers.
                     </p>
                 </div>
             </div>

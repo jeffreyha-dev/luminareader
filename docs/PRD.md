@@ -22,6 +22,7 @@ LuminaReader is a modern, lightweight, local-first web-based e-reader designed t
     - **EPUB:** Pagination, font sizing, chapter navigation.
     - **PDF:** Vertical scroll, fit-to-width/height, zoom controls.
     - **Comics:** Single/Double page views, immersive mode.
+    - **Navigation Direction:** LTR/RTL reading direction for page-turn controls.
 3.  **Progress Tracking**
     - Auto-save reading progress.
     - Reading stats (time read, pages turned, streaks).

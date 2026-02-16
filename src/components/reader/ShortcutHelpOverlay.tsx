@@ -18,8 +18,8 @@ const SHORTCUTS = [
     },
     {
         category: 'Reader', keys: [
-            { key: '→ / ↓', desc: 'Next Page' },
-            { key: '← / ↑', desc: 'Previous Page' },
+            { key: '→ / ↓', desc: 'Next Page (direction-aware)' },
+            { key: '← / ↑', desc: 'Previous Page (direction-aware)' },
             { key: 'F', desc: 'Toggle Fullscreen' },
             { key: 'T', desc: 'Toggle Table of Contents' },
             { key: 'B', desc: 'Toggle Bookmark' },

@@ -24,15 +24,44 @@ export default function PDFViewer({ book }: PDFViewerProps) {
     const [isInitializing, setIsInitializing] = useState(true);
     const [isLandscape, setIsLandscape] = useState(false);
 
-    const { updateProgress, setToc, setSearchResults, setSearching, bookmarks, setBookmarks } = useReaderStore();
-    const { comicMode } = useSettingsStore();
+    const { updateProgress, setToc, setSearchResults, setSearching } = useReaderStore();
+    const { comicMode, readingDirection } = useSettingsStore();
     const isDoubleSpread = comicMode === 'double' && isLandscape;
 
     const isRenderingRef = useRef(false);
-    const getSpreadStartPage = useCallback((page: number, spread: boolean) => {
-        if (!spread || page <= 1) return page;
-        return page % 2 === 0 ? page - 1 : page;
+    const clampPage = useCallback((page: number, total: number) => {
+        if (total <= 0) return 1;
+        return Math.min(Math.max(page, 1), total);
     }, []);
+
+    const normalizePageForLayout = useCallback((page: number, total: number, spread: boolean) => {
+        const clamped = clampPage(page, total);
+        if (!spread || clamped <= 1 || total <= 1) return clamped;
+        if (clamped === total && total % 2 === 1) return clamped;
+        return clamped % 2 === 0 ? clamped - 1 : clamped;
+    }, [clampPage]);
+
+    const getPreviousPage = useCallback((current: number, total: number, spread: boolean, direction: 'ltr' | 'rtl') => {
+        if (total <= 0) return 1;
+        if (!spread) {
+            const delta = direction === 'rtl' ? 1 : -1;
+            return clampPage(current + delta, total);
+        }
+        const delta = direction === 'rtl' ? 2 : -2;
+        const candidate = normalizePageForLayout(current + delta, total, true);
+        return candidate === current ? current : candidate;
+    }, [clampPage, normalizePageForLayout]);
+
+    const getNextPage = useCallback((current: number, total: number, spread: boolean, direction: 'ltr' | 'rtl') => {
+        if (total <= 0) return 1;
+        if (!spread) {
+            const delta = direction === 'rtl' ? -1 : 1;
+            return clampPage(current + delta, total);
+        }
+        const delta = direction === 'rtl' ? -2 : 2;
+        const candidate = normalizePageForLayout(current + delta, total, true);
+        return candidate === current ? current : candidate;
+    }, [clampPage, normalizePageForLayout]);
 
     const getFitScaleForPage = useCallback((page: any) => {
         if (!containerRef.current) return 1.5;
@@ -199,7 +228,7 @@ export default function PDFViewer({ book }: PDFViewerProps) {
 
                 setIsInitializing(false);
                 // Render initial page at fit-to-container scale.
-                const initialPage = getSpreadStartPage(book.currentPage || 1, isDoubleSpread);
+                const initialPage = normalizePageForLayout(book.currentPage || 1, pdf.numPages, isDoubleSpread);
                 const page = await pdf.getPage(initialPage);
                 const fitScale = getFitScaleForPage(page);
                 setPageNum(initialPage);
@@ -219,7 +248,7 @@ export default function PDFViewer({ book }: PDFViewerProps) {
                 try { pdfRef.current.destroy(); } catch { }
             }
         };
-    }, [book.id, getFitScaleForPage, getSpreadStartPage, isDoubleSpread, renderPage]);
+    }, [book.id, getFitScaleForPage, normalizePageForLayout, renderPage]);
 
     // Re-render when page or scale changes
     useEffect(() => {
@@ -230,26 +259,25 @@ export default function PDFViewer({ book }: PDFViewerProps) {
 
     useEffect(() => {
         if (isInitializing) return;
-        setPageNum((prev) => getSpreadStartPage(prev, isDoubleSpread));
-    }, [getSpreadStartPage, isDoubleSpread, isInitializing]);
+        setPageNum((prev) => normalizePageForLayout(prev, numPages, isDoubleSpread));
+    }, [isDoubleSpread, isInitializing, normalizePageForLayout, numPages]);
 
     // Register navigateTo + search
     useEffect(() => {
         const totalPages = numPages;
-        const step = isDoubleSpread ? 2 : 1;
         useReaderStore.setState({
             navigateTo: (loc) => {
-                const rawTarget = typeof loc === 'number' ? loc : parseInt(loc);
-                const target = getSpreadStartPage(rawTarget, isDoubleSpread);
+                const rawTarget = typeof loc === 'number' ? loc : parseInt(loc, 10);
+                const target = normalizePageForLayout(rawTarget, totalPages, isDoubleSpread);
                 if (!isNaN(target) && target >= 1 && target <= totalPages) {
                     setPageNum(target);
                 }
             },
             prevPage: () => {
-                setPageNum((prev) => Math.max(1, prev - step));
+                setPageNum((prev) => getPreviousPage(prev, totalPages, isDoubleSpread, readingDirection));
             },
             nextPage: () => {
-                setPageNum((prev) => Math.min(totalPages, prev + step));
+                setPageNum((prev) => getNextPage(prev, totalPages, isDoubleSpread, readingDirection));
             },
             search: async (query: string) => {
                 const pdf = pdfRef.current;
@@ -292,14 +320,14 @@ export default function PDFViewer({ book }: PDFViewerProps) {
                 search: async () => { }
             });
         };
-    }, [getSpreadStartPage, isDoubleSpread, numPages, setSearching, setSearchResults]);
+    }, [getNextPage, getPreviousPage, isDoubleSpread, normalizePageForLayout, numPages, readingDirection, setSearching, setSearchResults]);
 
     const changePage = (offset: number) => {
-        const step = isDoubleSpread ? 2 : 1;
-        const target = offset > 0 ? pageNum + step : pageNum - step;
-        if (target >= 1 && target <= numPages) {
-            setPageNum(target);
+        if (offset > 0) {
+            setPageNum((prev) => getNextPage(prev, numPages, isDoubleSpread, readingDirection));
+            return;
         }
+        setPageNum((prev) => getPreviousPage(prev, numPages, isDoubleSpread, readingDirection));
     };
 
     const handleZoom = (delta: number) => {
@@ -315,6 +343,9 @@ export default function PDFViewer({ book }: PDFViewerProps) {
             console.error('Failed to fit PDF to viewport:', err);
         }
     }, [getFitScaleForPage, pageNum]);
+
+    const canGoBack = getPreviousPage(pageNum, numPages, isDoubleSpread, readingDirection) !== pageNum;
+    const canGoForward = getNextPage(pageNum, numPages, isDoubleSpread, readingDirection) !== pageNum;
 
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-[var(--bg-secondary)]">
@@ -358,7 +389,7 @@ export default function PDFViewer({ book }: PDFViewerProps) {
             <div className="h-16 flex items-center justify-center gap-12 border-t border-[var(--border)] bg-[var(--bg-secondary)] px-8">
                 <button
                     onClick={() => changePage(-1)}
-                    disabled={pageNum <= 1}
+                    disabled={!canGoBack}
                     className="p-2 disabled:opacity-30 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 >
                     <ChevronLeft size={24} />
@@ -374,7 +405,7 @@ export default function PDFViewer({ book }: PDFViewerProps) {
 
                 <button
                     onClick={() => changePage(1)}
-                    disabled={pageNum + (isDoubleSpread ? 2 : 1) > numPages}
+                    disabled={!canGoForward}
                     className="p-2 disabled:opacity-30 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 >
                     <ChevronRight size={24} />

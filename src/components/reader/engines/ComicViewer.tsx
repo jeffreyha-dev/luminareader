@@ -33,7 +33,40 @@ export default function ComicViewer({ book }: ComicViewerProps) {
     const { updateProgress } = useReaderStore();
     const { readingDirection, comicMode, setComicMode } = useSettingsStore();
     const isDoubleSpread = comicMode === 'double' && isLandscape;
-    const pageStep = isDoubleSpread ? 2 : 1;
+
+    const clampPage = useCallback((page: number, total: number) => {
+        if (total <= 0) return 1;
+        return Math.min(Math.max(page, 1), total);
+    }, []);
+
+    const normalizePageForLayout = useCallback((page: number, total: number, spread: boolean) => {
+        const clamped = clampPage(page, total);
+        if (!spread || clamped <= 1 || total <= 1) return clamped;
+        if (clamped === total && total % 2 === 1) return clamped;
+        return clamped % 2 === 0 ? clamped - 1 : clamped;
+    }, [clampPage]);
+
+    const getPreviousPage = useCallback((current: number, total: number) => {
+        if (total <= 0 || comicMode === 'continuous') return current;
+        if (!isDoubleSpread) {
+            const delta = readingDirection === 'rtl' ? 1 : -1;
+            return clampPage(current + delta, total);
+        }
+        const delta = readingDirection === 'rtl' ? 2 : -2;
+        const candidate = normalizePageForLayout(current + delta, total, true);
+        return candidate === current ? current : candidate;
+    }, [clampPage, comicMode, isDoubleSpread, normalizePageForLayout, readingDirection]);
+
+    const getNextPage = useCallback((current: number, total: number) => {
+        if (total <= 0 || comicMode === 'continuous') return current;
+        if (!isDoubleSpread) {
+            const delta = readingDirection === 'rtl' ? -1 : 1;
+            return clampPage(current + delta, total);
+        }
+        const delta = readingDirection === 'rtl' ? -2 : 2;
+        const candidate = normalizePageForLayout(current + delta, total, true);
+        return candidate === current ? current : candidate;
+    }, [clampPage, comicMode, isDoubleSpread, normalizePageForLayout, readingDirection]);
 
     useEffect(() => {
         let isMounted = true;
@@ -110,22 +143,21 @@ export default function ComicViewer({ book }: ComicViewerProps) {
         }
     }, [pageNum, pages.length, book.id, updateProgress]);
 
-    const changePage = useCallback((offset: number) => {
-        setPageNum(prev => {
-            const next = prev + offset;
-            if (next >= 1 && next <= pagesRef.current.length) {
-                if (containerRef.current) containerRef.current.scrollTop = 0;
-                return next;
-            }
-            return prev;
-        });
-    }, []);
     const goBack = useCallback(() => {
-        changePage(readingDirection === 'rtl' ? pageStep : -pageStep);
-    }, [changePage, pageStep, readingDirection]);
+        setPageNum(prev => {
+            const next = getPreviousPage(prev, pagesRef.current.length);
+            if (next !== prev && containerRef.current) containerRef.current.scrollTop = 0;
+            return next;
+        });
+    }, [getPreviousPage]);
+
     const goForward = useCallback(() => {
-        changePage(readingDirection === 'rtl' ? -pageStep : pageStep);
-    }, [changePage, pageStep, readingDirection]);
+        setPageNum(prev => {
+            const next = getNextPage(prev, pagesRef.current.length);
+            if (next !== prev && containerRef.current) containerRef.current.scrollTop = 0;
+            return next;
+        });
+    }, [getNextPage]);
 
     useEffect(() => {
         const updateOrientation = () => {
@@ -136,16 +168,11 @@ export default function ComicViewer({ book }: ComicViewerProps) {
         return () => window.removeEventListener('resize', updateOrientation);
     }, []);
 
-    // Clamp saved page to the archive bounds once we know total pages.
+    // Clamp saved page and align spread anchor when layout/orientation changes.
     useEffect(() => {
         if (pages.length === 0) return;
-        setPageNum((prev) => Math.min(Math.max(prev, 1), pages.length));
-    }, [pages.length]);
-
-    useEffect(() => {
-        if (!isDoubleSpread) return;
-        setPageNum((prev) => (prev > 1 && prev % 2 === 0 ? prev - 1 : prev));
-    }, [isDoubleSpread]);
+        setPageNum((prev) => normalizePageForLayout(prev, pages.length, isDoubleSpread));
+    }, [isDoubleSpread, normalizePageForLayout, pages.length]);
 
     // Register navigation actions so global keyboard shortcuts work for comics.
     useEffect(() => {
@@ -160,23 +187,6 @@ export default function ComicViewer({ book }: ComicViewerProps) {
                 nextPage: () => { },
             });
         };
-    }, [goBack, goForward]);
-
-    // Local fallback for keyboard navigation inside comic reader.
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                e.preventDefault();
-                goBack();
-            }
-            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                e.preventDefault();
-                goForward();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
     }, [goBack, goForward]);
 
     if (isInitializing) {
@@ -208,12 +218,8 @@ export default function ComicViewer({ book }: ComicViewerProps) {
         );
     }
 
-    const canGoBack = readingDirection === 'rtl'
-        ? pageNum + pageStep <= pages.length
-        : pageNum - pageStep >= 1;
-    const canGoForward = readingDirection === 'rtl'
-        ? pageNum - pageStep >= 1
-        : pageNum + pageStep <= pages.length;
+    const canGoBack = getPreviousPage(pageNum, pages.length) !== pageNum;
+    const canGoForward = getNextPage(pageNum, pages.length) !== pageNum;
 
     return (
         <div className="flex-1 flex flex-col h-full bg-[#0a0a0a] overflow-hidden relative">
@@ -259,7 +265,7 @@ export default function ComicViewer({ book }: ComicViewerProps) {
                 {comicMode !== 'continuous' ? (
                     <div className="relative h-full w-full flex items-center justify-center p-4">
                         {/* Touch Zones */}
-                    <div className="absolute inset-0 flex z-10">
+                        <div className="absolute inset-0 flex z-10">
                             <div className="w-1/2 h-full cursor-pointer" onClick={goBack} />
                             <div className="w-1/2 h-full cursor-pointer" onClick={goForward} />
                         </div>

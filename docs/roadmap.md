@@ -1,7 +1,7 @@
 # LuminaReader Product Roadmap
 
 ## Current Status: Alpha (v0.1.0)
-The core reading experience is functional for local files (EPUB, PDF, CBZ/CBR). The library management system is in place with metadata extraction and basic persistence.
+The core reading experience is functional for local files (EPUB, PDF, CBZ). The library management system is in place with metadata extraction and basic persistence.
 
 ## Phase 1: Core Experience (Current)
 Focus on stability, file support, and basic reading features.
@@ -14,7 +14,7 @@ Focus on stability, file support, and basic reading features.
 - [x] **Reader Engines**
   - [x] PDF Viewer (Fit-to-width/height, Zoom)
   - [x] EPUB Reader (Basic pagination)
-  - [x] Comic Reader (CBZ/CBR support)
+  - [x] Comic Reader (CBZ support)
 - [x] **Navigation**
   - [x] Keyboard shortcuts (Arrow keys)
   - [x] Reading progress tracking
@@ -28,9 +28,12 @@ Address technical debt and improve rendering performance.
 - [x] **Advanced Settings**
   - [x] Custom themes/fonts for EPUB.
   - [x] Double-page view for Comics/PDFs on landscape.
+  - [x] Reading direction control (LTR/RTL) for page-turn behavior.
 - [ ] **PWA Polish**
   - Service worker caching strategies.
   - Install prompt optimization.
+- [ ] **CBR Support (Deferred)**
+  - Keep user messaging clear and support CBZ as the stable comic format for now.
 
 ## Phase 3: Organization & Sync
 Enhance how users manage their collections.

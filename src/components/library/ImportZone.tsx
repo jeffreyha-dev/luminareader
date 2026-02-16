@@ -13,13 +13,18 @@ export default function ImportZone() {
     const handleFiles = useCallback(async (files: FileList | File[]) => {
         const supportedFormats = new Set(['epub', 'pdf', 'cbz']);
         const unsupportedFiles: string[] = [];
+        const cbrFiles: string[] = [];
 
         setIsImporting(true);
         try {
             for (const file of Array.from(files)) {
                 const format = file.name.split('.').pop()?.toLowerCase();
                 if (!format || !supportedFormats.has(format)) {
-                    unsupportedFiles.push(file.name);
+                    if (format === 'cbr') {
+                        cbrFiles.push(file.name);
+                    } else {
+                        unsupportedFiles.push(file.name);
+                    }
                     continue;
                 }
 
@@ -43,8 +48,17 @@ export default function ImportZone() {
                 });
             }
 
-            if (unsupportedFiles.length > 0) {
-                alert(`Skipped unsupported files:\n${unsupportedFiles.join('\n')}`);
+            if (cbrFiles.length > 0 || unsupportedFiles.length > 0) {
+                const sections: string[] = [];
+                if (cbrFiles.length > 0) {
+                    sections.push(
+                        `CBR is not supported yet. Convert these files to CBZ and try again:\n${cbrFiles.join('\n')}`
+                    );
+                }
+                if (unsupportedFiles.length > 0) {
+                    sections.push(`Skipped unsupported files:\n${unsupportedFiles.join('\n')}`);
+                }
+                alert(sections.join('\n\n'));
             }
         } catch (error) {
             console.error('Import error:', error);

@@ -13,8 +13,9 @@ Stabilize core UX for Alpha and prepare a clean path to Beta by fixing feature m
 Target: Week 1
 
 1. CBR support truthfulness
-- Implement real CBR metadata + reader loading, or remove CBR from import/filter/UI copy until complete.
-- Files: `src/components/library/ImportZone.tsx`, `src/lib/utils/metadata.ts`, `src/components/reader/engines/ComicViewer.tsx`, `docs/PRD.md`, `docs/user_guide.md`.
+- Decision: **defer CBR** for this alpha cycle and keep CBZ as the supported comic format.
+- Enforce accurate messaging in import/reader/docs until full CBR parser support is implemented.
+- Files: `src/components/library/ImportZone.tsx`, `src/components/reader/engines/ComicViewer.tsx`, `docs/roadmap.md`, `docs/PRD.md`, `docs/user_guide.md`.
 
 2. Sidebar behavior alignment
 - Make non-library tabs functional (with actual filters/routes), or hide/disable them with clear “coming soon” state.
@@ -27,6 +28,7 @@ Target: Week 1
 Acceptance criteria
 - No UI element claims a capability that does not work.
 - Sidebar interactions always produce visible functional changes.
+- CBR attempts produce explicit conversion guidance (CBR -> CBZ).
 
 ## Phase 2: Reader Stability and UX (P0/P1)
 Target: Week 2
