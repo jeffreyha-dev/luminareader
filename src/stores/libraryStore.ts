@@ -3,7 +3,7 @@ import { create } from 'zustand';
 export type LibraryViewMode = 'grid' | 'list';
 export type BookSortOption = 'title' | 'author' | 'added' | 'lastReading';
 export type FormatFilter = 'all' | 'epub' | 'pdf' | 'comic';
-export type LibrarySection = 'library' | 'reading' | 'favorites' | 'recent';
+export type LibrarySection = 'library' | 'reading' | 'favorites' | 'recent' | 'insights';
 
 interface LibraryState {
     viewMode: LibraryViewMode;

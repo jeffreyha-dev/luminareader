@@ -28,6 +28,7 @@ Welcome to LuminaReader! This guide helps you navigate your library and reading 
 - **Search:** Use the search bar at the top to filter by title or author.
 - **Filter:** Click the pill buttons (All, eBooks, PDFs, Comics) to narrow your view.
 - **Sort:** Use the sort dropdown to arrange by "Date Added", "Title", or "Last Read".
+- **Insights Tab:** Open `Insights` in the sidebar for the full reading dashboard. The main `Library` view keeps a compact reading snapshot.
 
 ## Troubleshooting
 

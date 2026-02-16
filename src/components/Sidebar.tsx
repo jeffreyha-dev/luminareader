@@ -6,6 +6,7 @@ import {
     BookOpen,
     Heart,
     Clock,
+    BarChart3,
     ChevronLeft,
     ChevronRight,
     Settings
@@ -70,6 +71,7 @@ export default function Sidebar() {
         { id: 'reading', icon: BookOpen, label: 'Reading Now' },
         { id: 'favorites', icon: Heart, label: 'Favorites' },
         { id: 'recent', icon: Clock, label: 'Recently Added' },
+        { id: 'insights', icon: BarChart3, label: 'Insights' },
     ];
 
     return (

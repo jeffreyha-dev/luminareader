@@ -31,6 +31,7 @@ Last Updated: 2026-02-16
 
 ## UX and Accessibility
 - Sidebar only has functional navigation enabled.
+- Sidebar `Insights` tab opens full stats view.
 - Focus ring appears when navigating controls with keyboard.
 - No debug-only text appears in production UI.
 

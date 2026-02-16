@@ -19,6 +19,7 @@ Focus on stability, file support, and basic reading features.
   - [x] Keyboard shortcuts (Arrow keys)
   - [x] Reading progress tracking
   - [x] Session tracking (Stats)
+  - [x] Dedicated Insights tab with full reading dashboard
 
 ## Phase 2: Refinement & Performance
 Address technical debt and improve rendering performance.
