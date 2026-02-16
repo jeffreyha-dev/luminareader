@@ -1,0 +1,19 @@
+{
+    "name": "LuminaReader",
+    "short_name": "Lumina",
+    "description": "Premium client-side eReader for EPUB, PDF, and Comics",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f0f1a",
+    "theme_color": "#7c3aed",
+    "icons": [
+        {
+            "src": "/icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "orientation": "any",
+    "scope": "/"
+}
