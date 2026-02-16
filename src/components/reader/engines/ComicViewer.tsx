@@ -24,6 +24,7 @@ export default function ComicViewer({ book }: ComicViewerProps) {
     const [pageNum, setPageNum] = useState(book.currentPage || 1);
     const [isInitializing, setIsInitializing] = useState(true);
     const [isLandscape, setIsLandscape] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     // Use a ref to track blob URLs for cleanup so we never capture a stale closure
     const pagesRef = useRef<string[]>([]);
@@ -66,40 +67,21 @@ export default function ComicViewer({ book }: ComicViewerProps) {
                         setPages(pageUrls);
                         setIsInitializing(false);
                     }
-                    /*
-                    } else if (book.format === 'cbr') {
-                        const { createExtractorFromData } = await import('unrar-js');
-                        const arrayBuffer = await book.fileBlob.arrayBuffer();
-                        const extractor = await createExtractorFromData(arrayBuffer);
-                        const list = extractor.getFileList();
-    
-                        const imageFiles = list.arcHeader.fileHeaders
-                            .filter(h => /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(h.name))
-                            .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    
-                        if (!isMounted) return;
-    
-                        const pageUrls: string[] = [];
-                        for (const fileHeader of imageFiles) {
-                            if (!isMounted) break;
-                            const extracted = extractor.extractFiles([fileHeader.name]);
-                            const fileData = extracted.files[0];
-                            if (fileData.extraction) {
-                                const blob = new Blob([fileData.extraction]);
-                                pageUrls.push(URL.createObjectURL(blob));
-                            }
-                        }
-    
-                        if (isMounted) {
-                            pagesRef.current = pageUrls;
-                            setPages(pageUrls);
-                            setIsInitializing(false);
-                        }
-                    */
+                } else if (book.format === 'cbr') {
+                    if (isMounted) {
+                        setLoadError('CBR is not currently supported. Please convert this archive to CBZ and import it again.');
+                        setIsInitializing(false);
+                    }
+                } else {
+                    if (isMounted) {
+                        setLoadError('Unsupported comic format.');
+                        setIsInitializing(false);
+                    }
                 }
             } catch (err: any) {
                 if (isMounted) {
                     console.error('Failed to load comic:', err);
+                    setLoadError('Failed to load comic archive.');
                     setIsInitializing(false);
                 }
             }
@@ -202,6 +184,15 @@ export default function ComicViewer({ book }: ComicViewerProps) {
             <div className="flex-1 flex flex-col items-center justify-center bg-[var(--bg-primary)] h-screen">
                 <Loader2 size={48} className="text-[var(--accent)] animate-spin mb-4" />
                 <p className="text-[var(--text-secondary)] font-medium">Extracting panels...</p>
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+                <p className="text-red-400 font-bold mb-2">Comic could not be opened</p>
+                <p className="text-sm text-[var(--text-secondary)] max-w-md">{loadError}</p>
             </div>
         );
     }

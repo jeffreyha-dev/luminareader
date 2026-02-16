@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/storage/db';
 import { Clock, BookOpen, Flame, Calendar, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils/cn';
 
 interface DayStat {
     date: string;
@@ -12,63 +12,54 @@ interface DayStat {
 }
 
 export default function StatsDashboard() {
-    const [stats, setStats] = useState<{
+    const sessions = useLiveQuery(async () => db.reading_sessions.toArray(), []);
+
+    const stats = useMemo<{
         totalTime: number; // minutes
         totalPages: number;
         streak: number;
         days: DayStat[];
-    }>({
-        totalTime: 0,
-        totalPages: 0,
-        streak: 0,
-        days: []
-    });
+    }>(() => {
+        if (!sessions) {
+            return { totalTime: 0, totalPages: 0, streak: 0, days: [] };
+        }
 
-    useEffect(() => {
-        async function loadStats() {
-            const sessions = await db.reading_sessions.toArray();
+        const totalSeconds = sessions.reduce((acc, s) => acc + s.duration, 0);
+        const totalPages = sessions.reduce((acc, s) => acc + s.pagesRead, 0);
 
-            // Calculate totals
-            const totalSeconds = sessions.reduce((acc, s) => acc + s.duration, 0);
-            const totalPages = sessions.reduce((acc, s) => acc + s.pagesRead, 0);
+        const last7Days: DayStat[] = [];
+        const now = new Date();
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
 
-            // Calculate last 7 days
-            const last7Days: DayStat[] = [];
-            const now = new Date();
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(now);
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
+            const daySessions = sessions.filter(s =>
+                s.startTime.toISOString().split('T')[0] === dateStr
+            );
 
-                const daySessions = sessions.filter(s =>
-                    s.startTime.toISOString().split('T')[0] === dateStr
-                );
-
-                last7Days.push({
-                    date: dateStr,
-                    duration: Math.round(daySessions.reduce((acc, s) => acc + s.duration, 0) / 60),
-                    pages: daySessions.reduce((acc, s) => acc + s.pagesRead, 0)
-                });
-            }
-
-            // Simple streak calculation (mock for now, or based on days with sessions)
-            const sessionDates = new Set(sessions.map(s => s.startTime.toISOString().split('T')[0]));
-            let streak = 0;
-            let checkDate = new Date(now);
-            while (sessionDates.has(checkDate.toISOString().split('T')[0])) {
-                streak++;
-                checkDate.setDate(checkDate.getDate() - 1);
-            }
-
-            setStats({
-                totalTime: Math.round(totalSeconds / 60),
-                totalPages,
-                streak,
-                days: last7Days
+            last7Days.push({
+                date: dateStr,
+                duration: Math.round(daySessions.reduce((acc, s) => acc + s.duration, 0) / 60),
+                pages: daySessions.reduce((acc, s) => acc + s.pagesRead, 0)
             });
         }
-        loadStats();
-    }, []);
+
+        const sessionDates = new Set(sessions.map(s => s.startTime.toISOString().split('T')[0]));
+        let streak = 0;
+        let checkDate = new Date(now);
+        while (sessionDates.has(checkDate.toISOString().split('T')[0])) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        }
+
+        return {
+            totalTime: Math.round(totalSeconds / 60),
+            totalPages,
+            streak,
+            days: last7Days
+        };
+    }, [sessions]);
 
     const maxDuration = Math.max(...stats.days.map(d => d.duration), 1);
 

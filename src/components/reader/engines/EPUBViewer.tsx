@@ -191,7 +191,7 @@ export default function EPUBViewer({ book }: EPUBViewerProps) {
                 try { bookRef.current.destroy(); } catch { }
             }
         };
-    }, [book.id, applyStyles, customFontFamily, customThemeBackground, customThemeText, fontFamily, fontSize, lineHeight, theme]);
+    }, [book.id, applyStyles]);
 
     // Re-apply styles when settings change
     useEffect(() => {

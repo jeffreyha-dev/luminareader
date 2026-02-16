@@ -8,7 +8,13 @@ import { useLibraryStore } from '@/stores/libraryStore';
 import BookCard from './BookCard';
 
 export default function BookGrid() {
-    const { searchQuery, formatFilter, sortBy, viewMode, selectedCollection } = useLibraryStore();
+    const { searchQuery, formatFilter, sortBy, viewMode, selectedCollection, activeSection } = useLibraryStore();
+    const emptyMessageBySection: Record<string, string> = {
+        library: "Your library is empty. Import some books to get started.",
+        reading: "You have no books in progress yet.",
+        favorites: "No favorite books yet. Mark books as favorite in Book Options.",
+        recent: "No books added recently.",
+    };
 
     const books = useLiveQuery(async () => {
         let results = await db.books.toArray();
@@ -21,6 +27,16 @@ export default function BookGrid() {
                 }
                 return fmt === formatFilter;
             });
+        }
+
+        if (activeSection === 'reading') {
+            results = results.filter((b: BookRecord) => b.progress > 0 && b.progress < 100);
+        } else if (activeSection === 'favorites') {
+            results = results.filter((b: BookRecord) => Boolean(b.metadata?.favorite));
+        } else if (activeSection === 'recent') {
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - 14);
+            results = results.filter((b: BookRecord) => b.addedAt >= cutoff);
         }
 
         if (selectedCollection) {
@@ -50,7 +66,7 @@ export default function BookGrid() {
         }
 
         return results;
-    }, [searchQuery, formatFilter, sortBy, selectedCollection]);
+    }, [searchQuery, formatFilter, sortBy, selectedCollection, activeSection]);
 
     if (!books) return (
         // ... (existing loader - unchanged)
@@ -75,7 +91,7 @@ export default function BookGrid() {
                 <p className="text-sm text-[var(--text-secondary)] mt-1 max-w-xs">
                     {searchQuery
                         ? `No matches for "${searchQuery}" in your library.`
-                        : "Your library is empty. Import some books to get started."}
+                        : emptyMessageBySection[activeSection] ?? emptyMessageBySection.library}
                 </p>
             </div>
         );
@@ -83,9 +99,6 @@ export default function BookGrid() {
 
     return (
         <div className="flex-1 w-full h-full min-h-[400px] border border-dashed border-[var(--border)] overflow-y-auto">
-            <div className="absolute top-2 right-2 text-[10px] text-[var(--accent)] z-50">
-                DB Query: {books?.length ?? 'loading'} books
-            </div>
             {viewMode === 'grid' ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 p-4">
                     {books.map((book: BookRecord) => (

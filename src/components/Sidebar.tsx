@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import {
     Library,
-    Layers,
     BookOpen,
     Heart,
     Clock,
@@ -13,7 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import CollectionManager from '@/components/library/CollectionManager';
-import { useLibraryStore } from '@/stores/libraryStore';
+import { useLibraryStore, type LibrarySection } from '@/stores/libraryStore';
 import SettingsModal from '@/components/library/SettingsModal';
 
 interface SidebarItemProps {
@@ -27,6 +26,7 @@ interface SidebarItemProps {
 const SidebarItem = ({ icon: Icon, label, active, collapsed, onClick }: SidebarItemProps) => {
     return (
         <button
+            type="button"
             onClick={onClick}
             className={cn(
                 "flex items-center w-full h-12 transition-all duration-200 group relative",
@@ -56,15 +56,16 @@ const SidebarItem = ({ icon: Icon, label, active, collapsed, onClick }: SidebarI
 export default function Sidebar() {
     const [collapsed, setCollapsed] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
-    const { selectedCollection, setSelectedCollection } = useLibraryStore();
-    const [activeTab, setActiveTab] = useState('library');
+    const { activeSection, setActiveSection, setSelectedCollection } = useLibraryStore();
 
-    const handleTabClick = (id: string) => {
-        setActiveTab(id);
-        if (id === 'library') setSelectedCollection(null);
+    const handleTabClick = (id: LibrarySection) => {
+        setActiveSection(id);
+        if (id !== 'library') {
+            setSelectedCollection(null);
+        }
     };
 
-    const navItems = [
+    const navItems: { id: LibrarySection; icon: React.ElementType; label: string }[] = [
         { id: 'library', icon: Library, label: 'Library' },
         { id: 'reading', icon: BookOpen, label: 'Reading Now' },
         { id: 'favorites', icon: Heart, label: 'Favorites' },
@@ -99,7 +100,7 @@ export default function Sidebar() {
                             key={item.id}
                             icon={item.icon}
                             label={item.label}
-                            active={activeTab === item.id}
+                            active={activeSection === item.id}
                             collapsed={collapsed}
                             onClick={() => handleTabClick(item.id)}
                         />

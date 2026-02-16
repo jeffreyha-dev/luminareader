@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { db, BookRecord, CollectionRecord } from '@/lib/storage/db';
-import { X, Save, Tag, Book, User, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { X, Save, Tag, Book, User, Heart, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 interface BookOptionsModalProps {
@@ -15,6 +15,7 @@ export default function BookOptionsModal({ book, onClose }: BookOptionsModalProp
     const [author, setAuthor] = useState(book.author);
     const [collections, setCollections] = useState<CollectionRecord[]>([]);
     const [selectedCollections, setSelectedCollections] = useState<string[]>(book.collections || []);
+    const [isFavorite, setIsFavorite] = useState(Boolean(book.metadata?.favorite));
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -32,7 +33,11 @@ export default function BookOptionsModal({ book, onClose }: BookOptionsModalProp
             await db.books.update(book.id, {
                 title,
                 author,
-                collections: selectedCollections
+                collections: selectedCollections,
+                metadata: {
+                    ...book.metadata,
+                    favorite: isFavorite
+                }
             });
 
             // Sync with collections table (add bookId to collections)
@@ -154,6 +159,26 @@ export default function BookOptionsModal({ book, onClose }: BookOptionsModalProp
                                 <p className="text-xs text-[var(--text-muted)] italic">Create collections in the sidebar first</p>
                             )}
                         </div>
+                    </div>
+
+                    {/* Favorite Section */}
+                    <div className="space-y-3">
+                        <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-2">
+                            <Heart size={16} />
+                            Favorite
+                        </label>
+                        <button
+                            onClick={() => setIsFavorite((prev) => !prev)}
+                            className={cn(
+                                "w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all",
+                                isFavorite
+                                    ? "bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]"
+                                    : "bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50"
+                            )}
+                        >
+                            <span className="text-sm font-medium">Show in Favorites</span>
+                            <Heart size={16} fill={isFavorite ? "currentColor" : "none"} />
+                        </button>
                     </div>
                 </div>
 

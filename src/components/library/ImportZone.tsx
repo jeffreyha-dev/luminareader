@@ -11,16 +11,25 @@ export default function ImportZone() {
     const [isImporting, setIsImporting] = useState(false);
 
     const handleFiles = useCallback(async (files: FileList | File[]) => {
+        const supportedFormats = new Set(['epub', 'pdf', 'cbz']);
+        const unsupportedFiles: string[] = [];
+
         setIsImporting(true);
         try {
             for (const file of Array.from(files)) {
+                const format = file.name.split('.').pop()?.toLowerCase();
+                if (!format || !supportedFormats.has(format)) {
+                    unsupportedFiles.push(file.name);
+                    continue;
+                }
+
                 const metadata = await extractMetadata(file);
 
                 await db.books.add({
                     id: crypto.randomUUID(),
                     title: metadata.title,
                     author: metadata.author,
-                    format: file.name.split('.').pop()?.toLowerCase() as any,
+                    format: format as any,
                     coverBlob: metadata.coverBlob,
                     fileBlob: file, // Storing the actual file
                     fileSize: file.size,
@@ -32,6 +41,10 @@ export default function ImportZone() {
                     collections: [],
                     metadata: {}
                 });
+            }
+
+            if (unsupportedFiles.length > 0) {
+                alert(`Skipped unsupported files:\n${unsupportedFiles.join('\n')}`);
             }
         } catch (error) {
             console.error('Import error:', error);
@@ -71,7 +84,7 @@ export default function ImportZone() {
             <input
                 type="file"
                 multiple
-                accept=".epub,.pdf,.cbz,.cbr"
+                accept=".epub,.pdf,.cbz"
                 onChange={(e) => e.target.files && handleFiles(e.target.files)}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
@@ -97,7 +110,7 @@ export default function ImportZone() {
                             Import Content
                         </p>
                         <p className="text-xs text-[var(--text-secondary)] mt-1 text-center">
-                            Drag & drop EPUB, PDF, CBZ, or CBR files here
+                            Drag & drop EPUB, PDF, or CBZ files here
                         </p>
                     </>
                 )}

@@ -66,10 +66,31 @@
   body {
     @apply bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased selection:bg-[var(--accent)] selection:text-white transition-colors duration-300;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
 }
 
 @layer components {
   .glass {
     @apply backdrop-blur-[12px] bg-[var(--bg-surface)]/70;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-[12px] bg-[var(--bg-surface)]/70 border border-[var(--border)] rounded-xl shadow-lg;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }

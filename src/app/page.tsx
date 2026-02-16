@@ -7,10 +7,15 @@ import ImportZone from '@/components/library/ImportZone';
 import BookGrid from '@/components/library/BookGrid';
 import StatsDashboard from '@/components/library/StatsDashboard';
 import { useLibraryStore } from '@/stores/libraryStore';
-import { cn } from '@/lib/utils/cn';
 
 export default function LibraryPage() {
-  const { searchQuery, formatFilter } = useLibraryStore();
+  const { searchQuery, formatFilter, activeSection } = useLibraryStore();
+  const sectionTitle: Record<string, string> = {
+    library: 'Your Books',
+    reading: 'Reading Now',
+    favorites: 'Favorites',
+    recent: 'Recently Added',
+  };
 
   return (
     <>
@@ -42,7 +47,7 @@ export default function LibraryPage() {
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           <div className="flex-shrink-0 flex flex-col max-w-[1400px] w-full mx-auto p-6 space-y-8">
-            {!searchQuery && formatFilter === 'all' && (
+            {!searchQuery && formatFilter === 'all' && activeSection === 'library' && (
               <div className="flex-shrink-0">
                 <StatsDashboard />
               </div>
@@ -50,7 +55,7 @@ export default function LibraryPage() {
 
             <section className="flex-1 flex flex-col min-h-[500px]">
               <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6 flex-shrink-0">
-                {searchQuery ? `Search results for "${searchQuery}"` : 'Your Books'}
+                {searchQuery ? `Search results for "${searchQuery}"` : sectionTitle[activeSection] ?? 'Your Books'}
               </h2>
               <div className="flex-1 min-h-0 relative">
                 <BookGrid />

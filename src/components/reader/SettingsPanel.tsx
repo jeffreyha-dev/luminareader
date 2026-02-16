@@ -36,6 +36,13 @@ export default function SettingsPanel() {
         { id: 'dyslexic', name: 'Dyslexic Friendly' },
         { id: 'custom', name: 'Custom Stack' },
     ];
+    const fontPreviewFamily: Record<string, string> = {
+        serif: '"Literata", "Times New Roman", serif',
+        'sans-serif': '"Inter", "Helvetica Neue", Arial, sans-serif',
+        monospace: '"JetBrains Mono", "SFMono-Regular", Menlo, monospace',
+        dyslexic: '"OpenDyslexic", "Comic Sans MS", sans-serif',
+        custom: customFontFamily || '"Literata", "Times New Roman", serif',
+    };
 
     const layoutModes = [
         { id: 'single', name: 'Single', icon: BookOpen },
@@ -137,7 +144,7 @@ export default function SettingsPanel() {
                                         ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] font-bold"
                                         : "border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]"
                                 )}
-                                style={{ fontFamily: f.id }}
+                                style={{ fontFamily: fontPreviewFamily[f.id] || fontPreviewFamily.serif }}
                             >
                                 {f.name}
                             </button>
